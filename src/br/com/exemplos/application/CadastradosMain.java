@@ -22,7 +22,7 @@ import br.com.exemplos.model.cadastro.Pessoa;
 public class CadastradosMain {
 
 	private final static String TIMEZONE_PT_BR= "America/Sao_Paulo";
-	
+
 	public static void main(String []args){
 		List<Cadastro> cadastradosRecord = getCadatrados();
 		System.out.println("Lista com a ordem de inserção:");
@@ -52,6 +52,29 @@ public class CadastradosMain {
 
 		System.out.println("Lista após Agrupamento:");
 		responseDTO.forEach(System.out::println);
+
+	}
+
+	private static PessoaDTO convertToPessoaDTO(Pessoa pessoa) {
+		List<DocumentoDTO> documentosDTO = pessoa.documento().stream()
+				.map(CadastradosMain::convertToDocumentoDTO)
+				.collect(Collectors.toList());
+		PessoaDTO pessoaDTO = new PessoaDTO();   
+		pessoaDTO.setId(pessoa.id());
+		pessoaDTO.setNomeCompleto(pessoa.nome());
+		pessoaDTO.setIdade(pessoa.idade());
+		pessoaDTO.setNascimento(pessoa.dtNascimento());
+		pessoaDTO.setDocumento(documentosDTO);
+		return pessoaDTO;
+	}
+
+	private static DocumentoDTO convertToDocumentoDTO(Documento documento) {
+		DocumentoDTO documentoDTO = new DocumentoDTO();
+		documentoDTO.setId(documento.id());
+		documentoDTO.setNomeCompleto(documento.nome());
+		documentoDTO.setNumero(documento.numero());
+		documentoDTO.setTipoDocumentoIndicador(documento.tipoDocumentoIndicador());
+		return documentoDTO;
 
 	}
 
@@ -118,27 +141,4 @@ public class CadastradosMain {
 
 		return Arrays.asList(fabiano, thaiany, ari, liberata, julia, theo, clara);
 	}
-	
-    private static PessoaDTO convertToPessoaDTO(Pessoa pessoa) {
-    	   List<DocumentoDTO> documentosDTO = pessoa.documento().stream()
-    	            .map(CadastradosMain::convertToDocumentoDTO)
-    	            .collect(Collectors.toList());
-    	  PessoaDTO pessoaDTO = new PessoaDTO();   
-    	  pessoaDTO.setId(pessoa.id());
-    	  pessoaDTO.setNomeCompleto(pessoa.nome());
-    	  pessoaDTO.setIdade(pessoa.idade());
-    	  pessoaDTO.setNascimento(pessoa.dtNascimento());
-    	  pessoaDTO.setDocumento(documentosDTO);
-        return pessoaDTO;
-    }
-    
-    private static DocumentoDTO convertToDocumentoDTO(Documento documento) {
-    	DocumentoDTO documentoDTO = new DocumentoDTO();
-    	documentoDTO.setId(documento.id());
-    	documentoDTO.setNomeCompleto(documento.nome());
-    	documentoDTO.setNumero(documento.numero());
-    	documentoDTO.setTipoDocumentoIndicador(documento.tipoDocumentoIndicador());
-    	return documentoDTO;
-        
-    }
 }
