@@ -10,38 +10,45 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import br.com.exemplos.dto.CadastroDTO;
+import br.com.exemplos.dto.CadastradosDTO;
+import br.com.exemplos.dto.CadastradosResponseDTO;
+import br.com.exemplos.dto.DocumentoDTO;
+import br.com.exemplos.dto.PessoaDTO;
 import br.com.exemplos.indicador.TipoDocumentoIndicador;
 import br.com.exemplos.model.cadastro.Cadastro;
 import br.com.exemplos.model.cadastro.Documento;
 import br.com.exemplos.model.cadastro.Pessoa;
 
-public class CadastrarPessoas {
+public class CadastradosMain {
 
 	private final static String TIMEZONE_PT_BR= "America/Sao_Paulo";
+	
 	public static void main(String []args){
-		List<Cadastro> cadastrados = getCadatrados();
+		List<Cadastro> cadastradosRecord = getCadatrados();
 		System.out.println("Lista com a ordem de inserção:");
-		cadastrados.forEach(System.out::println);
+		cadastradosRecord.forEach(System.out::println);
 
-		//cadastrados.sort(Comparator.comparing(Cadastro::dataCadastro)); // Ordena a Listapela Data
+		CadastradosResponseDTO cadastradosResponseDTO = new CadastradosResponseDTO();
 
-		//System.out.println("Lista após ordenação:");
-		//cadastrados.forEach(System.out::println);
-
-
-		CadastroDTO cadastroDTO = new CadastroDTO();
-
-		List<Cadastro> responseDTO = cadastrados.stream()
+		List<CadastradosDTO> responseDTO = cadastradosRecord.stream()
 				.collect(Collectors.groupingBy(
 						Cadastro::dataCadastro, 
 						Collectors.flatMapping(c -> c.pessoas().stream(), Collectors.toList()))) // Unir as listas de pessoas
 				.entrySet().stream()
-				.map(entry -> new Cadastro(entry.getKey(), entry.getValue())) // Criar novos objetos Cadastro
-				.sorted(Comparator.comparing(Cadastro::dataCadastro))
+				.map(entry -> {
+					Date dataCadastro = entry.getKey();
+					List<PessoaDTO> pessoasDTO = entry.getValue().stream()
+							.map(CadastradosMain::convertToPessoaDTO)
+							.collect(Collectors.toList());
+					CadastradosDTO cadastradosDTO = new CadastradosDTO();
+					cadastradosDTO.setDataDoCadastro(dataCadastro);
+					cadastradosDTO.setCadastrados(pessoasDTO);
+					return cadastradosDTO;
+				})
+				.sorted(Comparator.comparing(CadastradosDTO::getDataDoCadastro))
 				.collect(Collectors.toList());
 
-		cadastroDTO.setCadastrados(responseDTO);
+		cadastradosResponseDTO.setCadastrados(responseDTO);
 
 		System.out.println("Lista após Agrupamento:");
 		responseDTO.forEach(System.out::println);
@@ -110,5 +117,28 @@ public class CadastrarPessoas {
 						TipoDocumentoIndicador.PF)));
 
 		return Arrays.asList(fabiano, thaiany, ari, liberata, julia, theo, clara);
-	}	
+	}
+	
+    private static PessoaDTO convertToPessoaDTO(Pessoa pessoa) {
+    	   List<DocumentoDTO> documentosDTO = pessoa.documento().stream()
+    	            .map(CadastradosMain::convertToDocumentoDTO)
+    	            .collect(Collectors.toList());
+    	  PessoaDTO pessoaDTO = new PessoaDTO();   
+    	  pessoaDTO.setId(pessoa.id());
+    	  pessoaDTO.setNomeCompleto(pessoa.nome());
+    	  pessoaDTO.setIdade(pessoa.idade());
+    	  pessoaDTO.setNascimento(pessoa.dtNascimento());
+    	  pessoaDTO.setDocumento(documentosDTO);
+        return pessoaDTO;
+    }
+    
+    private static DocumentoDTO convertToDocumentoDTO(Documento documento) {
+    	DocumentoDTO documentoDTO = new DocumentoDTO();
+    	documentoDTO.setId(documento.id());
+    	documentoDTO.setNomeCompleto(documento.nome());
+    	documentoDTO.setNumero(documento.numero());
+    	documentoDTO.setTipoDocumentoIndicador(documento.tipoDocumentoIndicador());
+    	return documentoDTO;
+        
+    }
 }
